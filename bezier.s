@@ -153,9 +153,9 @@ s5:
 setPixelOnFire:
 	;zamalowywanie obliczonego pixela
 	mov	rax, r15 	;szerokosc obrazka [B]
-	imul	r12 	;rax = py*rax : offset py wysokości
+	imul	r11 	;rax = py*rax : offset py wysokości
 	
-	lea	rdi, [4*r11] ;offset po szerokości
+	lea	rdi, [4*r12] ;offset po szerokości
 	add	rdi, r10 
 	add	rdi, rax
 	xor	ax, ax

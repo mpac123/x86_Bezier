@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	int height = atoi(argv[2]);
 	
 	
-    sf::RenderWindow window(sf::VideoMode(width, height), "Bezier's Curve");
+    sf::RenderWindow window(sf::VideoMode(width, height), "Krzywa Beziera");
     sf::CircleShape point[5];
     
     

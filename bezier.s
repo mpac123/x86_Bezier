@@ -48,6 +48,7 @@ loadNextPoints:
 	movlps xmm2,[rsi+16]	;xmm2=(0,0,p2.x,p2.y)
 	movlps xmm3,[rsi+24]	;xmm3=(0,0,03.x,p3.y)
 	movlps xmm4,[rsi+32]	;xmm4=(0,0,p4.x,p4.y)
+po_zaladowaniu:
 	psubd xmm1, xmm0
 	psubd xmm2, xmm0
 	psubd xmm3, xmm0
@@ -56,7 +57,7 @@ loadNextPoints:
 	;lddqu	xmm2, [rsi+24]	;xmm2=(p3.x,p3.y,p4.x,p4.y)
 	;psubd 	xmm1, xmm0 		;odejmowanie od kazdej wspolrzednej odpowiadajacej wspolrzednej p0
 	;psubd	xmm2, xmm0
-	
+po_odjeciu:	
 initializeConstants:
 	;inicjalizacja roznych stałych występujących w algorytmie
 	
@@ -64,16 +65,23 @@ initializeConstants:
 	mov rax, 0x400000004
 	movq xmm5, rax
 	pmulld xmm1,xmm5		;xmm1=(0,0,4*p1.x,4*p1.y)
-	cvtpi2ps xmm1, mm1
 	pmulld xmm3,xmm5		;xmm3=(0,0,4*p3.x,4*p3.y)
-	cvtpi2ps xmm3,mm3
-	mov rax, 0x60000006
+	
+	mov rax, 0x600000006
 	movq xmm5, rax
 	pmulld xmm2, xmm5		;xmm2=(0,0,6*p2.x,6*p2.y)
-	cvtpi2ps xmm2, mm2
+	
+	
+	cvtdq2ps xmm1, xmm1
+	cvtdq2ps xmm2, xmm2
+	cvtdq2ps xmm3,xmm3
+	cvtdq2ps xmm4,xmm4
 	
 	mov rax, 0x3b8000003b800000
 	movq xmm5, rax ; dt: xmm5=(0,0,1/256,1/256)
+
+	;cvtdq2ps xmm5,xmm5  
+	
 	mov rax, 0x3f8000003f800000
 	movq xmm6, rax ; xmm6=(0,0,1.0,1.0)
 	mov rax, 0x0
@@ -85,7 +93,7 @@ initializeConstants:
 loop:
 	
 	
-	paddd t,dt		;zwiekszenie t o 1 krok
+	addps t,dt		;zwiekszenie t o 1 krok
 	
 	;kopie do obliczeń:
 	;xmm9 - p3
@@ -93,9 +101,13 @@ loop:
 	;xmm11 - p1
 	;xmm13 - p4
 	
+s1:
+	
 	;mnozenie przez potęgi t
-	movaps xmm8, t ;t^1
+	movaps xmm8,t
+s0:
 	movaps xmm9, xmm3
+st:
 	mulps xmm9, xmm8 ;p3*t
 	
 	mulps xmm8, t ;t^2
@@ -105,7 +117,7 @@ loop:
 	mulps xmm8, t ;t^3
 	movaps xmm11, xmm1
 	mulps xmm11, xmm8 ;p1*t^3
-	
+s2:
 	;mnożenie przez potęgi (1-t)
 	movaps xmm8, xmm6 ;1
 	subps xmm8, t ;1-t
@@ -119,23 +131,25 @@ loop:
 	mulps xmm8,xmm14 ;(1-t)^3
 	mulps xmm9,xmm8 ;p3*(1-t)^3
 	
+	movaps xmm13,xmm4
 	mulps xmm8,xmm14 ;(1-t)^4
 	mulps xmm13,xmm8 ;p4*(1-t)^4
-	
+s3:	
 	;sumowanie
 	mov rax, 0x0
 	movq xmm7, rax
-	paddd xmm7,xmm9
-	paddd xmm7,xmm10
-	paddd xmm7,xmm11
-	paddd xmm7,xmm13
-	
+	addps xmm7,xmm9
+	addps xmm7,xmm10
+	addps xmm7,xmm11
+	addps xmm7,xmm13
+	cvtps2dq xmm7,xmm7
+s4:	
 	;zapisanie obliczonych wspolrzednych do oddzielnych rejestrow
 	movq r11,xmm7
-	mov r12d,r11d
+	movsxd r12,r11d
 	sar r11,32
 	;r11 px; r12 py
-
+s5:
 setPixelOnFire:
 	;zamalowywanie obliczonego pixela
 	mov	rax, r15 	;szerokosc obrazka [B]
